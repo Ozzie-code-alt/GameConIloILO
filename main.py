@@ -7,6 +7,7 @@ import itertools
 import keyboard
 import time
 import cvzone 
+import pyautogui
 import cv2 as cv
 import numpy as np
 import mediapipe as mp
@@ -14,7 +15,7 @@ import os
 import pyttsx3
 import threading
 
-
+from PIL import ImageGrab
 from collections import Counter
 from collections import deque
 from utils import CvFpsCalc
@@ -114,7 +115,9 @@ def main():
     os.makedirs(images_folder_path, exist_ok=True)
     overlay_image = cv.imread('frame.png')  # Replace with your image's path
     engine = pyttsx3.init()
-    max_images = 5  # Number of images to capture
+    screen_region = (0, 0, 1920, 1080)  # Adjust to your screen resolution
+    screen_width, screen_height = 1920, 1080
+    center_x, center_y = screen_width // 2, screen_height // 2
     while True:
         fps = cvFpsCalc.get()
         # Process Key (ESC: end) #################################################
@@ -138,7 +141,7 @@ def main():
         image.flags.writeable = True
         image2 = cv.cvtColor(image, cv.COLOR_BGR2RGB)
         overlay_image_resized = cv.resize(overlay_image, (image2.shape[1], image2.shape[0]))
-    
+        
     # Combine the frame and the overlay image
         combined_frame = cv.addWeighted(image2, 0.3, overlay_image_resized, 0.7, 0)
         codey = cv.imread('codey.png', cv.IMREAD_UNCHANGED)
@@ -146,8 +149,6 @@ def main():
         if results.multi_hand_landmarks is not None:
             for hand_landmarks, handedness in zip(results.multi_hand_landmarks,
                                                   results.multi_handedness):
-
-
                 # Bounding box calculation
                 brect = calc_bounding_rect(debug_image, hand_landmarks)
                 # Landmark calculation
@@ -203,22 +204,22 @@ def main():
                     perform_action(None)  # CLose Program
                 elif hand_gesture == 3:  # DevCOn OK   
                         # Capture the current image
+                        
                         def anotherFunction():
-                            counter_inside = 0
-                            if counter_inside < max_images:
+                            if True:
                                 engine2 = pyttsx3.init()
                                 engine2.say("You've unlocked the Robotopian OK seal! Say 'cheese' or 'circuit' in 3... 2... 1... Snap!")
                                 engine2.runAndWait()
-
-                                newIMg = cv.cvtColor(image, cv.COLOR_BGR2RGB)
-                                overlay_image_resizeds = cv.resize(overlay_image, (newIMg.shape[1], newIMg.shape[0]))
-                                # Combine the frame and the overlay image
-                                combined_framed = cv.addWeighted(newIMg, 0.8, overlay_image_resizeds, 1, 0)
-                                final_image = cvzone.overlayPNG(combined_framed, codey, [100,100])
-                                cv.imshow("Captured Image", final_image)
-                                cv.waitKey(2000)
-                                time.sleep(3)
-                                cv.destroyWindow('Captured Image')
+                                pyautogui.click(x=center_x, y=center_y)
+                                # newIMg = cv.cvtColor(image, cv.COLOR_BGR2RGB)
+                                # overlay_image_resizeds = cv.resize(overlay_image, (newIMg.shape[1], newIMg.shape[0]))
+                                # # Combine the frame and the overlay image
+                                # combined_framed = cv.addWeighted(newIMg, 0.8, overlay_image_resizeds, 1, 0)
+                                # final_image = cvzone.overlayPNG(combined_framed, codey, [100,100])
+                                # cv.imshow("Captured Image", final_image)
+                                # cv.waitKey(2000)
+                                # time.sleep(3)
+                                # cv.destroyWindow('Captured Image')
 
                                 try:
                                     with open(counter_Path, "r") as file:
@@ -227,21 +228,25 @@ def main():
                                     # If the file doesn't exist, create it with the initial value
                                     with open(counter_Path, "w") as file:
                                         file.write(str(image_counter))
+                                        
+                                time.sleep(3)
+                                screenshot = ImageGrab.grab(screen_region)
+                                screenshot.save(f"{images_folder_path}/captured_image_{image_counter}.jpg", "JPEG")
+                               
+                                # image_filename = os.path.join(images_folder_path, f"captured_image_{image_counter}.jpg")
 
-
-                                image_filename = os.path.join(images_folder_path, f"captured_image_{image_counter}.jpg")
-
-                                cv.imwrite(image_filename, final_image)
+                                # cv.imwrite(image_filename,final_image)
                                 # Increment the image counter
                                 image_counter += 1
                                 with open(counter_Path, "w") as file:
                                     file.write(str(image_counter))
-                                captured_images.append(image.copy())
-                                print(f"Captured image {counter_inside + 1}")
-                                counter_inside += 1
+
+ 
 
                         delayCode = threading.Timer(1, anotherFunction)
                         delayCode.start()
+                        
+
 
                 if point_gesture_id == 1:
                     print("ClockWise")
@@ -260,7 +265,7 @@ def main():
         cv.setWindowProperty('Hand Gesture Recognition', cv.WND_PROP_FULLSCREEN, cv.WINDOW_FULLSCREEN)
         cv.imshow('Hand Gesture Recognition', combined_frame_with_info)
         
-    display_captured_images(captured_images)
+    
 
 
 
@@ -269,33 +274,7 @@ def main():
     cv.destroyAllWindows()
 
 
-def display_captured_images(images):
-    if len(images) == 0:
-        print("No images captured.")
-        return
 
-    grid_cols = 3  # Number of columns in the grid
-    grid_rows = (len(images) + grid_cols - 1) // grid_cols
-    image_width = images[0].shape[1]
-    image_height = images[0].shape[0]
-
-    # Create a blank canvas for the grid
-    grid_canvas = np.zeros((grid_rows * image_height, grid_cols * image_width, 3), np.uint8)
-
-    for i, img in enumerate(images):
-        row = i // grid_cols
-        col = i % grid_cols
-
-        y1 = row * image_height
-        y2 = y1 + image_height
-        x1 = col * image_width
-        x2 = x1 + image_width
-
-        grid_canvas[y1:y2, x1:x2] = img
-
-    cv.imshow("Captured Images Grid", grid_canvas)
-    cv.waitKey(0)
-    cv.destroyAllWindows()
 
 def perform_action(gesture):
     if gesture == "thumbs_up":
