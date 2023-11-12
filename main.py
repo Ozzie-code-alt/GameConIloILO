@@ -26,7 +26,7 @@ from model import PointHistoryClassifier
 def get_args():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("--device", type=int, default=1)
+    parser.add_argument("--device", type=int, default=2)
     parser.add_argument("--width", help='cap width', type=int, default=960)
     parser.add_argument("--height", help='cap height', type=int, default=540)
 
@@ -115,7 +115,7 @@ def main():
     os.makedirs(images_folder_path, exist_ok=True)
     overlay_image = cv.imread('frame.png')  # Replace with your image's path
     engine = pyttsx3.init()
-    screen_region = (0, 0, 1920, 1080)  # Adjust to your screen resolution
+    screen_region = (0, 0, 2560, 1080)  # Adjust to your screen resolution
     screen_width, screen_height = 1920, 1080
     center_x, center_y = screen_width // 2, screen_height // 2
     while True:
@@ -141,7 +141,7 @@ def main():
         image.flags.writeable = True
         image2 = cv.cvtColor(image, cv.COLOR_BGR2RGB)
         overlay_image_resized = cv.resize(overlay_image, (image2.shape[1], image2.shape[0]))
-        
+        code_executed = False
     # Combine the frame and the overlay image
         combined_frame = cv.addWeighted(image2, 0.3, overlay_image_resized, 0.7, 0)
         codey = cv.imread('codey.png', cv.IMREAD_UNCHANGED)
@@ -199,18 +199,23 @@ def main():
                 if hand_gesture == 2:  # Point up
                     perform_action(None)  # Volume Up
                 elif hand_gesture == 1:  # ClosedFist point
-                    perform_action(None)  # Volume Down
+                    engine1 = pyttsx3.init()
+                    engine1.say("Rebooting... Wait for a few second")
+                    engine1.runAndWait()
+                    pyautogui.click(x=center_x, y=center_y)
+                    time.sleep(10)
                 elif hand_gesture == 4:  # GDSC Sign point
                     perform_action(None)  # CLose Program
                 elif hand_gesture == 3:  # DevCOn OK   
+                        if not code_executed:
                         # Capture the current image
-                        
-                        def anotherFunction():
+                            code_executed = True     
+                            # def anotherFunction():
                             if True:
                                 engine2 = pyttsx3.init()
-                                engine2.say("You've unlocked the Robotopian OK seal! Say 'cheese' or 'circuit' in 3... 2... 1... Snap!")
-                                engine2.runAndWait()
                                 pyautogui.click(x=center_x, y=center_y)
+                                engine2.say("Say cheese in 3...2...1...POSE!")
+                                engine2.runAndWait()
                                 # newIMg = cv.cvtColor(image, cv.COLOR_BGR2RGB)
                                 # overlay_image_resizeds = cv.resize(overlay_image, (newIMg.shape[1], newIMg.shape[0]))
                                 # # Combine the frame and the overlay image
@@ -228,11 +233,11 @@ def main():
                                     # If the file doesn't exist, create it with the initial value
                                     with open(counter_Path, "w") as file:
                                         file.write(str(image_counter))
-                                        
-                                time.sleep(3)
+
+                                time.sleep(6.5)
                                 screenshot = ImageGrab.grab(screen_region)
                                 screenshot.save(f"{images_folder_path}/captured_image_{image_counter}.jpg", "JPEG")
-                               
+                            
                                 # image_filename = os.path.join(images_folder_path, f"captured_image_{image_counter}.jpg")
 
                                 # cv.imwrite(image_filename,final_image)
@@ -240,13 +245,14 @@ def main():
                                 image_counter += 1
                                 with open(counter_Path, "w") as file:
                                     file.write(str(image_counter))
+                                    
 
- 
+    
 
-                        delayCode = threading.Timer(1, anotherFunction)
-                        delayCode.start()
-                        
-
+                            # delayCode = threading.Timer(1, anotherFunction)
+                            # delayCode.start()
+                            
+                
 
                 if point_gesture_id == 1:
                     print("ClockWise")
@@ -284,6 +290,8 @@ def perform_action(gesture):
     elif gesture == "GDSC":
         keyboard.Key.esc
     
+        
+
 
 def select_mode(key, mode):
     number = -1
